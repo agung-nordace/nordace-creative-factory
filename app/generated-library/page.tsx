@@ -345,10 +345,10 @@ export default function GeneratedLibraryPage() {
         .app { min-height:100vh; background:#f8fafc; color:#0f172a; font-family:Arial,Helvetica,sans-serif; }
         .sidebar { position:fixed; left:0; top:0; bottom:0; width:232px; background:#101827; color:white; padding:21px 15px; display:flex; flex-direction:column; z-index:30; }
         .brand { display:flex; align-items:center; gap:11px; padding:0 9px 21px; }
-        .brandMark { width:36px; height:36px; border-radius:9px; display:grid; place-items:center; background:#2563eb; font-weight:900; }
-        .brandName { font-size:15px; font-weight:850; }
+        .brandMark { width:36px; height:36px; border-radius:9px; display:grid; place-items:center; background:#2563eb; font-weight: 700; }
+        .brandName { font-size:15px; font-weight: 700; }
         .brandSub { margin-top:2px; color:#cbd5e1; font-size:11px; }
-        .navLabel { padding:0 10px 9px; color:#8fa4c3; font-size:10px; font-weight:900; letter-spacing:.08em; }
+        .navLabel { padding:0 10px 9px; color:#8fa4c3; font-size:10px; font-weight: 700; letter-spacing:.08em; }
         .nav { display:grid; gap:4px; }
         .nav button,.sidebarBottom button { width:100%; border:0; background:transparent; color:#e2e8f0; padding:12px 11px; border-radius:8px; text-align:left; font-size:13px; cursor:pointer; display:flex; gap:10px; align-items:center; }
         .nav button:hover,.sidebarBottom button:hover { background:#172236; }
@@ -356,26 +356,26 @@ export default function GeneratedLibraryPage() {
         .sidebarBottom { margin-top:auto; }
         .main { margin-left:232px; min-height:100vh; padding:32px 34px 50px; }
         .pageHeader { max-width:1500px; margin:0 auto 19px; display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .eyebrow { color:#2563eb; font-size:10px; font-weight:900; letter-spacing:.1em; }
+        .eyebrow { color:#2563eb; font-size:10px; font-weight: 700; letter-spacing:.1em; }
         h1 { margin:6px 0 5px; font-size:30px; }
         .pageHeader p,.libraryHeading p { margin:0; color:#64748b; font-size:13px; }
-        .generateButton { text-decoration:none; border-radius:8px; padding:10px 13px; background:#2563eb; color:white; font-size:12px; font-weight:850; }
+        .generateButton { text-decoration:none; border-radius:8px; padding:10px 13px; background:#2563eb; color:white; font-size:12px; font-weight: 700; }
         .filterCard { max-width:1500px; margin:0 auto 12px; padding:13px; display:grid; grid-template-columns:minmax(300px,1.15fr) minmax(260px,.85fr) auto; align-items:end; gap:10px; border:1px solid #dbe3ee; background:white; border-radius:10px; }
-        .filterField label { display:block; margin-bottom:6px; color:#64748b; font-size:9px; font-weight:900; letter-spacing:.07em; }
+        .filterField label { display:block; margin-bottom:6px; color:#64748b; font-size:9px; font-weight: 700; letter-spacing:.07em; }
         .searchControl { display:grid; grid-template-columns:1fr auto; }
         .searchControl input,.filterField select { width:100%; height:40px; border:1px solid #cbd5e1; background:white; padding:0 11px; font-size:12px; outline:none; }
         .searchControl input { border-radius:7px 0 0 7px; }
-        .searchControl button { min-width:77px; border:1px solid #cbd5e1; border-left:0; background:#f8fafc; border-radius:0 7px 7px 0; font-weight:800; cursor:pointer; }
+        .searchControl button { min-width:77px; border:1px solid #cbd5e1; border-left:0; background:#f8fafc; border-radius:0 7px 7px 0; font-weight: 700; cursor:pointer; }
         .filterField select { border-radius:7px; }
-        .clearButton { height:40px; border:1px solid #cbd5e1; background:white; color:#475569; border-radius:7px; padding:0 12px; font-size:11px; font-weight:800; cursor:pointer; }
+        .clearButton { height:40px; border:1px solid #cbd5e1; background:white; color:#475569; border-radius:7px; padding:0 12px; font-size:11px; font-weight: 700; cursor:pointer; }
         .productStrip { max-width:1500px; margin:0 auto 18px; display:flex; gap:7px; overflow-x:auto; padding-bottom:4px; }
-        .productPill { flex:0 0 auto; max-width:230px; display:flex; align-items:center; gap:8px; min-height:34px; border:1px solid #dbe3ee; background:white; color:#475569; border-radius:999px; padding:0 10px; cursor:pointer; font-size:10px; font-weight:750; }
+        .productPill { flex:0 0 auto; max-width:230px; display:flex; align-items:center; gap:8px; min-height:34px; border:1px solid #dbe3ee; background:white; color:#475569; border-radius:999px; padding:0 10px; cursor:pointer; font-size:10px; font-weight: 700; }
         .productPill.active { border-color:#93c5fd; background:#eff6ff; color:#1d4ed8; }
         .productPill > span:last-child { min-width:20px; height:20px; display:grid; place-items:center; border-radius:999px; background:#f1f5f9; font-size:9px; }
         .pillName { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .libraryHeading { max-width:1500px; margin:0 auto 13px; display:flex; align-items:flex-end; justify-content:space-between; gap:15px; }
         .libraryHeading h2 { margin:0 0 4px; font-size:20px; }
-        .skuBadge { padding:6px 9px; border-radius:999px; background:#f1f5f9; color:#475569; font-size:10px; font-weight:800; }
+        .skuBadge { padding:6px 9px; border-radius:999px; background:#f1f5f9; color:#475569; font-size:10px; font-weight: 700; }
         .assetGrid { max-width:1500px; margin:0 auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
         .assetCard { overflow:hidden; background:white; border:1px solid #dbe3ee; border-radius:9px; }
         .assetCard.highlighted { outline:3px solid #93c5fd; outline-offset:2px; }
@@ -383,11 +383,11 @@ export default function GeneratedLibraryPage() {
         .assetImage img { width:100%; aspect-ratio:1/1; object-fit:contain; display:block; }
         .assetBody { padding:11px; }
         .assetTitle { display:block; font-size:12px; line-height:1.35; }
-        .assetProduct { margin-top:5px; color:#1d4ed8; font-size:10px; font-weight:800; }
+        .assetProduct { margin-top:5px; color:#1d4ed8; font-size:10px; font-weight: 700; }
         .assetMeta { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
         .assetMeta span { background:#f1f5f9; color:#64748b; border-radius:999px; padding:4px 6px; font-size:9px; font-weight:700; }
         .assetActions { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
-        .assetActions a { display:flex; align-items:center; justify-content:center; min-height:32px; text-decoration:none; border:1px solid #cbd5e1; border-radius:6px; color:#334155; background:white; font-size:10px; font-weight:800; }
+        .assetActions a { display:flex; align-items:center; justify-content:center; min-height:32px; text-decoration:none; border:1px solid #cbd5e1; border-radius:6px; color:#334155; background:white; font-size:10px; font-weight: 700; }
         .assetActions a:hover { border-color:#93c5fd; background:#eff6ff; color:#1d4ed8; }
         .emptyState { max-width:1500px; margin:0 auto; min-height:220px; display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center; border:1px solid #dbe3ee; border-radius:10px; background:white; color:#64748b; font-size:12px; }
         .emptyState strong { color:#0f172a; font-size:14px; }

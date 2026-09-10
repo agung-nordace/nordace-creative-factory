@@ -1,0 +1,150 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  --background: #f8f8fa;
+  --foreground: #1d1c1d;
+
+  --nd-page: #f8f8fa;
+  --nd-surface: #ffffff;
+  --nd-surface-soft: #f6f6f8;
+
+  --nd-text: #1d1c1d;
+  --nd-text-soft: #454245;
+  --nd-muted: #616061;
+  --nd-faint: #8d8c8d;
+
+  --nd-border: #dedee3;
+  --nd-border-soft: #ededf0;
+  --nd-input-border: #c9c9cf;
+  --nd-input: #ffffff;
+
+  --nd-sidebar: #19171d;
+  --nd-sidebar-hover: #27242c;
+  --nd-sidebar-active: #1164a3;
+  --nd-sidebar-text: #e8e7e9;
+  --nd-sidebar-muted: #aaa8ad;
+
+  --nd-accent: #1264a3;
+  --nd-accent-hover: #0b568d;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #1a1d21;
+  --foreground: #e8e7e9;
+
+  --nd-page: #1a1d21;
+  --nd-surface: #222529;
+  --nd-surface-soft: #1f2226;
+
+  --nd-text: #e8e7e9;
+  --nd-text-soft: #d2d1d3;
+  --nd-muted: #b7b5b9;
+  --nd-faint: #8f8d92;
+
+  --nd-border: #3b3d42;
+  --nd-border-soft: #32353a;
+  --nd-input-border: #55585f;
+  --nd-input: #1f2226;
+
+  --nd-sidebar: #111318;
+  --nd-sidebar-hover: #272a2f;
+  --nd-sidebar-active: #1264a3;
+  --nd-sidebar-text: #f5f4f5;
+  --nd-sidebar-muted: #aaa8ad;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 100%;
+  min-height: 100%;
+  background: var(--nd-page);
+  color: var(--nd-text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-width: 100%;
+  min-height: 100vh;
+  background: var(--nd-page);
+  color: var(--nd-text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button,
+strong,
+b,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+}
+
+/*
+ * Prevent accidental ExtraBold / Black visual treatment from
+ * global utility classes. Page-specific code should also use <= 700.
+ */
+.font-extrabold,
+.font-black {
+  font-weight: 700 !important;
+}
+
+::selection {
+  background: rgba(18, 100, 163, .18);
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}

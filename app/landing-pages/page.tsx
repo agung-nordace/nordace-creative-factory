@@ -44,6 +44,33 @@ type Pagination = {
   hasPreviousPage: boolean;
 };
 
+type BulkSyncResult = {
+  success?: boolean;
+  needsLogin?: boolean;
+  error?: string;
+  totalDetected?: number | null;
+  uniqueDetected?: number;
+  rowsSynced?: number;
+  pagesVisited?: number;
+  complete?: boolean | null;
+};
+
+type SyncProgress = {
+  phase:
+    | "idle"
+    | "syncing"
+    | "loading"
+    | "analyzing"
+    | "complete"
+    | "error";
+  message: string;
+  total: number;
+  processed: number;
+  analyzed: number;
+  skipped: number;
+  failed: number;
+};
+
 export default function LandingPagesPage() {
   const [landingPages, setLandingPages] =
     useState<LandingPage[]>([]);
@@ -110,6 +137,29 @@ export default function LandingPagesPage() {
     reanalyzingId,
     setReanalyzingId,
   ] = useState<number | null>(null);
+
+  const [
+    bulkSyncing,
+    setBulkSyncing,
+  ] = useState(false);
+
+  const [
+    syncProgress,
+    setSyncProgress,
+  ] = useState<SyncProgress>({
+    phase: "idle",
+    message: "",
+    total: 0,
+    processed: 0,
+    analyzed: 0,
+    skipped: 0,
+    failed: 0,
+  });
+
+  const [
+    lastSyncResult,
+    setLastSyncResult,
+  ] = useState<BulkSyncResult | null>(null);
 
   // ============================================================
   // LOAD ALL PRODUCTS FOR FILTER
@@ -462,6 +512,317 @@ export default function LandingPagesPage() {
     }
   }
 
+
+  // ============================================================
+  // BULK SYNC + AUTO ANALYZE
+  // ============================================================
+
+  function needsAnalysis(
+    item: LandingPage
+  ) {
+    return (
+      !item.analyzed_at ||
+      !item.product_name ||
+      !item.headline ||
+      !item.body_text
+    );
+  }
+
+  async function analyzeOneLandingPage(
+    item: LandingPage
+  ) {
+    const response =
+      await fetch(
+        "/api/local-import/landing-page",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            url: item.url,
+          }),
+        }
+      );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result.success
+    ) {
+      throw new Error(
+        result.error ||
+          "Landing page analysis failed."
+      );
+    }
+  }
+
+  async function loadAllLandingPagesForAnalysis() {
+    const all: LandingPage[] = [];
+    const limit = 100;
+    let currentPage = 1;
+    let totalPages = 1;
+
+    setSyncProgress((current) => ({
+      ...current,
+      phase: "loading",
+      message:
+        "Loading synced landing pages and checking which ones still need analysis...",
+    }));
+
+    do {
+      const params =
+        new URLSearchParams({
+          page: String(currentPage),
+          limit: String(limit),
+        });
+
+      const response =
+        await fetch(
+          `/api/library/landing-pages?${params.toString()}`,
+          {
+            cache: "no-store",
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.error ||
+            "Failed to load landing pages for auto-analysis."
+        );
+      }
+
+      const batch: LandingPage[] =
+        result.data ?? [];
+
+      all.push(...batch);
+
+      totalPages =
+        Math.max(
+          1,
+          Number(
+            result.pagination?.pages ??
+              1
+          )
+        );
+
+      setSyncProgress((current) => ({
+        ...current,
+        message:
+          `Loading Landing Page Library... page ${currentPage} of ${totalPages}`,
+      }));
+
+      currentPage += 1;
+    } while (
+      currentPage <= totalPages
+    );
+
+    return all;
+  }
+
+  async function autoAnalyzeLandingPages() {
+    const all =
+      await loadAllLandingPagesForAnalysis();
+
+    const pending =
+      all.filter(
+        needsAnalysis
+      );
+
+    setSyncProgress((current) => ({
+      ...current,
+      phase: "analyzing",
+      message:
+        pending.length > 0
+          ? `Auto-analyzing ${pending.length} new or incomplete landing pages...`
+          : "All landing pages are already analyzed.",
+      total: pending.length,
+      processed: 0,
+      analyzed: 0,
+      skipped:
+        all.length -
+        pending.length,
+      failed: 0,
+    }));
+
+    if (
+      pending.length === 0
+    ) {
+      return;
+    }
+
+    let analyzed = 0;
+    let failed = 0;
+
+    // Small concurrency keeps the local machine responsive
+    // while still making a large first-time analysis much faster.
+    const concurrency = 3;
+
+    for (
+      let index = 0;
+      index < pending.length;
+      index += concurrency
+    ) {
+      const chunk =
+        pending.slice(
+          index,
+          index + concurrency
+        );
+
+      await Promise.all(
+        chunk.map(
+          async (item) => {
+            try {
+              await analyzeOneLandingPage(
+                item
+              );
+
+              analyzed += 1;
+            } catch (error) {
+              failed += 1;
+
+              console.error(
+                "Auto-analysis failed:",
+                item.url,
+                error
+              );
+            } finally {
+              setSyncProgress(
+                (current) => ({
+                  ...current,
+                  phase:
+                    "analyzing",
+                  processed:
+                    analyzed +
+                    failed,
+                  analyzed,
+                  failed,
+                  message:
+                    `Analyzing landing pages... ${analyzed + failed} of ${pending.length}`,
+                })
+              );
+            }
+          }
+        )
+      );
+    }
+  }
+
+  async function syncAndAnalyzeLandingPages() {
+    if (bulkSyncing) {
+      return;
+    }
+
+    const isLocal =
+      window.location.hostname ===
+        "localhost" ||
+      window.location.hostname ===
+        "127.0.0.1";
+
+    if (!isLocal) {
+      alert(
+        "Landing Page sync is available from localhost only."
+      );
+
+      return;
+    }
+
+    setBulkSyncing(true);
+    setLastSyncResult(null);
+
+    setSyncProgress({
+      phase: "syncing",
+      message:
+        "Syncing landing page index from Nordace Landing Platform...",
+      total: 0,
+      processed: 0,
+      analyzed: 0,
+      skipped: 0,
+      failed: 0,
+    });
+
+    try {
+      const response =
+        await fetch(
+          "/api/local-sync/landing-pages",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body:
+              JSON.stringify({}),
+          }
+        );
+
+      const result =
+        (await response.json()) as BulkSyncResult;
+
+      setLastSyncResult(
+        result
+      );
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.error ||
+            "Landing Page sync failed."
+        );
+      }
+
+      setSyncProgress(
+        (current) => ({
+          ...current,
+          phase: "loading",
+          message:
+            `Index sync complete. ${result.rowsSynced ?? result.uniqueDetected ?? 0} landing pages synced. Preparing auto-analysis...`,
+        })
+      );
+
+      await autoAnalyzeLandingPages();
+
+      setSyncProgress(
+        (current) => ({
+          ...current,
+          phase: "complete",
+          message:
+            current.failed > 0
+              ? `Sync complete with ${current.failed} analysis failure${current.failed === 1 ? "" : "s"}.`
+              : "Sync and auto-analysis complete.",
+        })
+      );
+
+      setPage(1);
+
+      await loadLandingPages();
+    } catch (error) {
+      setSyncProgress(
+        (current) => ({
+          ...current,
+          phase: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : String(error),
+        })
+      );
+    } finally {
+      setBulkSyncing(false);
+    }
+  }
+
   // ============================================================
   // USE LP
   // ============================================================
@@ -602,6 +963,20 @@ export default function LandingPagesPage() {
             </div>
 
             <button
+              className="syncButton"
+              onClick={
+                syncAndAnalyzeLandingPages
+              }
+              disabled={
+                bulkSyncing
+              }
+            >
+              {bulkSyncing
+                ? "Syncing & Analyzing..."
+                : "↻ Sync Landing Pages"}
+            </button>
+
+            <button
               className="primaryButton"
               onClick={() => {
                 setImportError("");
@@ -614,6 +989,126 @@ export default function LandingPagesPage() {
             </button>
           </div>
         </header>
+
+        {syncProgress.phase !== "idle" && (
+          <section
+            className={
+              syncProgress.phase ===
+              "error"
+                ? "syncPanel syncError"
+                : syncProgress.phase ===
+                    "complete"
+                  ? "syncPanel syncComplete"
+                  : "syncPanel"
+            }
+          >
+            <div className="syncPanelTop">
+              <div>
+                <div className="syncPanelEyebrow">
+                  LANDING PAGE SYNC
+                </div>
+
+                <h3>
+                  {syncProgress.phase ===
+                  "complete"
+                    ? "Sync complete"
+                    : syncProgress.phase ===
+                        "error"
+                      ? "Sync stopped"
+                      : syncProgress.phase ===
+                          "analyzing"
+                        ? "Auto-analyzing landing pages"
+                        : "Sync in progress"}
+                </h3>
+
+                <p>
+                  {syncProgress.message}
+                </p>
+              </div>
+
+              {bulkSyncing && (
+                <div className="syncSpinner" />
+              )}
+            </div>
+
+            {syncProgress.total > 0 && (
+              <>
+                <div className="syncProgressTrack">
+                  <div
+                    className="syncProgressFill"
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.round(
+                          (syncProgress.processed /
+                            syncProgress.total) *
+                            100
+                        )
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="syncProgressMeta">
+                  <span>
+                    {syncProgress.processed} /{" "}
+                    {syncProgress.total} processed
+                  </span>
+
+                  <strong>
+                    {Math.min(
+                      100,
+                      Math.round(
+                        (syncProgress.processed /
+                          syncProgress.total) *
+                          100
+                      )
+                    )}
+                    %
+                  </strong>
+                </div>
+              </>
+            )}
+
+            <div className="syncStats">
+              <div>
+                <span>INDEX SYNCED</span>
+                <strong>
+                  {lastSyncResult?.rowsSynced ??
+                    lastSyncResult?.uniqueDetected ??
+                    "-"}
+                </strong>
+              </div>
+
+              <div>
+                <span>AUTO ANALYZED</span>
+                <strong>
+                  {syncProgress.analyzed}
+                </strong>
+              </div>
+
+              <div>
+                <span>ALREADY COMPLETE</span>
+                <strong>
+                  {syncProgress.skipped}
+                </strong>
+              </div>
+
+              <div>
+                <span>FAILED</span>
+                <strong>
+                  {syncProgress.failed}
+                </strong>
+              </div>
+            </div>
+
+            {lastSyncResult?.needsLogin && (
+              <div className="syncCommand">
+                npm run lp:login
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ====================================================
             FILTERS
@@ -1238,11 +1733,11 @@ export default function LandingPagesPage() {
           place-items: center;
           border-radius: 9px;
           background: #2563eb;
-          font-weight: 800;
+          font-weight: 700;
         }
 
         .brandName {
-          font-weight: 750;
+          font-weight: 700;
           font-size: 15px;
         }
 
@@ -1316,7 +1811,7 @@ export default function LandingPagesPage() {
 
         .eyebrow {
           font-size: 10px;
-          font-weight: 800;
+          font-weight: 700;
           letter-spacing: 0.12em;
           color: #2563eb;
           margin-bottom: 6px;
@@ -1361,6 +1856,159 @@ export default function LandingPagesPage() {
           font-weight: 650;
         }
 
+        .syncButton {
+          border: 1px solid #2563eb;
+          background: white;
+          color: #2563eb;
+          padding: 10px 15px;
+          border-radius: 7px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .syncButton:hover:not(:disabled) {
+          background: #eff6ff;
+        }
+
+        .syncButton:disabled {
+          opacity: .6;
+          cursor: wait;
+        }
+
+        .syncPanel {
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          border-radius: 10px;
+          padding: 16px;
+          margin-bottom: 14px;
+        }
+
+        .syncPanel.syncComplete {
+          background: #f0fdf4;
+          border-color: #bbf7d0;
+        }
+
+        .syncPanel.syncError {
+          background: #fef2f2;
+          border-color: #fecaca;
+        }
+
+        .syncPanelTop {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 20px;
+        }
+
+        .syncPanelEyebrow {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: .1em;
+          color: #2563eb;
+          margin-bottom: 5px;
+        }
+
+        .syncPanel h3 {
+          margin: 0;
+          font-size: 16px;
+        }
+
+        .syncPanel p {
+          margin: 6px 0 0;
+          color: #64748b;
+          font-size: 11px;
+          line-height: 1.55;
+        }
+
+        .syncSpinner {
+          width: 22px;
+          height: 22px;
+          flex: 0 0 22px;
+          border-radius: 50%;
+          border: 3px solid #bfdbfe;
+          border-top-color: #2563eb;
+          animation: syncSpin .8s linear infinite;
+        }
+
+        @keyframes syncSpin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+
+        .syncProgressTrack {
+          height: 9px;
+          overflow: hidden;
+          background: #dbeafe;
+          border-radius: 999px;
+          margin-top: 14px;
+        }
+
+        .syncProgressFill {
+          height: 100%;
+          background: #2563eb;
+          border-radius: inherit;
+          transition: width .25s ease;
+        }
+
+        .syncProgressMeta {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          margin-top: 6px;
+          color: #64748b;
+          font-size: 10px;
+        }
+
+        .syncProgressMeta strong {
+          color: #1d4ed8;
+        }
+
+        .syncStats {
+          display: grid;
+          grid-template-columns:
+            repeat(4, minmax(0, 1fr));
+          gap: 8px;
+          margin-top: 14px;
+        }
+
+        .syncStats > div {
+          padding: 10px 11px;
+          border: 1px solid rgba(148, 163, 184, .22);
+          border-radius: 7px;
+          background: rgba(255, 255, 255, .72);
+        }
+
+        .syncStats span,
+        .syncStats strong {
+          display: block;
+        }
+
+        .syncStats span {
+          color: #64748b;
+          font-size: 8px;
+          font-weight: 700;
+          letter-spacing: .05em;
+        }
+
+        .syncStats strong {
+          margin-top: 3px;
+          color: #0f172a;
+          font-size: 16px;
+        }
+
+        .syncCommand {
+          margin-top: 12px;
+          padding: 10px 12px;
+          border-radius: 6px;
+          background: #0f172a;
+          color: white;
+          font-size: 11px;
+          font-family: monospace;
+        }
+
         .filterPanel {
           background: white;
           border: 1px solid
@@ -1387,7 +2035,7 @@ export default function LandingPagesPage() {
           display: block;
           font-size: 9px;
           color: #64748b;
-          font-weight: 800;
+          font-weight: 700;
           letter-spacing: 0.08em;
           margin-bottom: 7px;
         }
@@ -1555,7 +2203,7 @@ export default function LandingPagesPage() {
             #bfdbfe;
           color: #2563eb;
           font-size: 12px;
-          font-weight: 800;
+          font-weight: 700;
           display: grid;
           place-items: center;
         }
@@ -1617,7 +2265,7 @@ export default function LandingPagesPage() {
           color: #94a3b8;
           font-size: 9px;
           letter-spacing: 0.09em;
-          font-weight: 800;
+          font-weight: 700;
           margin-bottom: 5px;
         }
 
@@ -1809,7 +2457,7 @@ export default function LandingPagesPage() {
         .fieldLabel {
           display: block;
           font-size: 10px;
-          font-weight: 800;
+          font-weight: 700;
           margin-bottom: 7px;
         }
 
@@ -1852,6 +2500,11 @@ export default function LandingPagesPage() {
         @media (
           max-width: 900px
         ) {
+          .syncStats {
+            grid-template-columns:
+              repeat(2, minmax(0, 1fr));
+          }
+
           .grid {
             grid-template-columns:
               1fr;

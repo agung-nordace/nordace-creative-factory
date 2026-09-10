@@ -304,16 +304,16 @@ export default function ImagesPage() {
         <style jsx>{`
           .imagesPage { min-height:100vh; padding:31px 34px 50px; background:#f8fafc; color:#0f172a; }
           .topHeader { max-width:1500px; margin:0 auto 20px; display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-          .eyebrow { color:#2563eb; font-size:10px; font-weight:900; letter-spacing:.1em; }
+          .eyebrow { color:#2563eb; font-size:10px; font-weight: 700; letter-spacing:.1em; }
           h1 { margin:7px 0 5px; font-size:31px; letter-spacing:-.025em; }
           .topHeader p { margin:0; color:#64748b; font-size:13px; }
-          .syncButton { min-height:40px; border:1px solid #2563eb; border-radius:7px; padding:0 13px; background:#2563eb; color:#fff; font-size:11px; font-weight:850; cursor:pointer; }
+          .syncButton { min-height:40px; border:1px solid #2563eb; border-radius:7px; padding:0 13px; background:#2563eb; color:#fff; font-size:11px; font-weight: 700; cursor:pointer; }
           .filterCard { max-width:1500px; margin:0 auto 18px; display:grid; grid-template-columns:minmax(260px,1fr) minmax(190px,.7fr) minmax(190px,.7fr) auto; gap:11px; padding:14px; border:1px solid #cbd5e1; border-radius:9px; background:#fff; }
-          label { display:block; margin-bottom:6px; color:#475569; font-size:9px; font-weight:900; letter-spacing:.06em; }
+          label { display:block; margin-bottom:6px; color:#475569; font-size:9px; font-weight: 700; letter-spacing:.06em; }
           input,select { width:100%; height:40px; border:1px solid #94a3b8; border-radius:6px; padding:0 11px; background:#fff; color:#0f172a; font-size:12px; }
           .resultBox { min-width:128px; padding:0 12px; display:flex; flex-direction:column; justify-content:center; border:1px solid #94a3b8; border-radius:6px; background:#fff; }
           .resultBox label { margin-bottom:1px; }.resultBox strong { font-size:14px; }.resultBox span { color:#64748b; font-size:9px; }
-          .listMeta { max-width:1500px; margin:0 auto 10px; display:flex; justify-content:space-between; color:#64748b; font-size:10px; font-weight:750; }
+          .listMeta { max-width:1500px; margin:0 auto 10px; display:flex; justify-content:space-between; color:#64748b; font-size:10px; font-weight: 700; }
           .creativeGrid,.loadingGrid { max-width:1500px; margin:0 auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
           .creativeCard { overflow:hidden; border:1px solid #94a3b8; border-radius:9px; background:#fff; }
           .imageWrap { aspect-ratio:1/1; background:#eef2f7; overflow:hidden; }
@@ -322,13 +322,13 @@ export default function ImagesPage() {
           .cardBody { padding:11px; }.creativeName { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-size:11px; }
           .creativeMeta { margin-top:7px; display:flex; justify-content:space-between; gap:8px; color:#64748b; font-size:9px; }
           .cardActions { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:10px; }
-          .cardActions a,.cardActions button { min-height:34px; display:flex; align-items:center; justify-content:center; border:1px solid #64748b; border-radius:6px; background:#fff; color:#0f172a; text-decoration:none; font-size:10px; font-weight:800; cursor:pointer; }
+          .cardActions a,.cardActions button { min-height:34px; display:flex; align-items:center; justify-content:center; border:1px solid #64748b; border-radius:6px; background:#fff; color:#0f172a; text-decoration:none; font-size:10px; font-weight: 700; cursor:pointer; }
           .cardActions button { border-color:#2563eb; background:#2563eb; color:#fff; }
           .pagination { max-width:1500px; margin:19px auto 0; display:flex; justify-content:center; align-items:center; gap:12px; }
-          .pagination button { min-height:36px; border:1px solid #cbd5e1; border-radius:7px; padding:0 12px; background:#fff; font-size:10px; font-weight:800; cursor:pointer; }
+          .pagination button { min-height:36px; border:1px solid #cbd5e1; border-radius:7px; padding:0 12px; background:#fff; font-size:10px; font-weight: 700; cursor:pointer; }
           .pagination button:disabled { opacity:.4; cursor:not-allowed; }.pagination span { color:#64748b; font-size:10px; }
           .errorBox { max-width:1500px; margin:0 auto; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; border:1px solid #fecaca; border-radius:9px; background:#fff; color:#991b1b; text-align:center; }
-          .errorBox span { max-width:650px; font-size:11px; }.errorBox button { min-height:34px; border:0; border-radius:6px; padding:0 12px; background:#2563eb; color:#fff; font-size:10px; font-weight:800; }
+          .errorBox span { max-width:650px; font-size:11px; }.errorBox button { min-height:34px; border:0; border-radius:6px; padding:0 12px; background:#2563eb; color:#fff; font-size:10px; font-weight: 700; }
           .skeleton { aspect-ratio:1/1.24; border-radius:9px; background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 37%,#e2e8f0 63%); background-size:400% 100%; animation:pulse 1.3s ease infinite; }
           @keyframes pulse { 0%{background-position:100% 0} 100%{background-position:0 0} }
           @media (max-width:1200px){.creativeGrid,.loadingGrid{grid-template-columns:repeat(3,minmax(0,1fr));}}

@@ -1,26 +1,627 @@
 @import "tailwindcss";
 
+/* ============================================================
+   ND CREATIVE FACTORY — UNIFIED DESIGN SYSTEM V4
+   One visual language across every workspace route.
+   Dark mode is a first-class theme, not an inversion layer.
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  --nd-page: #f7f7f8;
+  --nd-surface: #ffffff;
+  --nd-surface-raised: #ffffff;
+  --nd-surface-soft: #f4f4f5;
+  --nd-surface-hover: #f0f0f2;
+  --nd-surface-selected: #eef7fc;
+  --nd-surface-inset: #fafafa;
+
+  --nd-text: #1d1c1d;
+  --nd-text-soft: #454245;
+  --nd-muted: #6f6d72;
+  --nd-faint: #96949a;
+  --nd-disabled: #aaa8ad;
+
+  --nd-border: #dedee3;
+  --nd-border-soft: #ececef;
+  --nd-border-strong: #c8c8cf;
+  --nd-input: #ffffff;
+  --nd-input-border: #c7c7ce;
+
+  --nd-accent: #1264a3;
+  --nd-accent-hover: #0b568d;
+  --nd-accent-soft: #eaf5fb;
+  --nd-accent-text: #0b4c7b;
+  --nd-accent-border: #9cc8e4;
+
+  --nd-success: #137333;
+  --nd-success-bg: #e8f5ec;
+  --nd-warning: #8a4b08;
+  --nd-warning-bg: #fff5dd;
+  --nd-danger: #b3261e;
+  --nd-danger-bg: #fcebea;
+
+  --nd-sidebar: #16191d;
+  --nd-sidebar-hover: #22262b;
+  --nd-sidebar-active: #1d4f73;
+  --nd-sidebar-text: #f5f5f6;
+  --nd-sidebar-muted: #aaa8ad;
+  --nd-sidebar-border: rgba(255,255,255,.075);
+
+  --nd-shadow-1: 0 1px 2px rgba(15, 23, 42, .05), 0 1px 4px rgba(15, 23, 42, .04);
+  --nd-shadow-2: 0 12px 30px rgba(15, 23, 42, .09);
+
+  --nd-radius-sm: 8px;
+  --nd-radius-md: 12px;
+  --nd-radius-lg: 16px;
+
+  --background: var(--nd-page);
+  --foreground: var(--nd-text);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --nd-page: #1a1d21;
+  --nd-surface: #222529;
+  --nd-surface-raised: #272a2f;
+  --nd-surface-soft: #1f2226;
+  --nd-surface-hover: #2b2e33;
+  --nd-surface-selected: #17384e;
+  --nd-surface-inset: #181b1f;
+
+  --nd-text: #f3f3f4;
+  --nd-text-soft: #d9d8da;
+  --nd-muted: #b2b0b5;
+  --nd-faint: #8f8d92;
+  --nd-disabled: #747278;
+
+  --nd-border: #3d4046;
+  --nd-border-soft: #32353a;
+  --nd-border-strong: #55585f;
+  --nd-input: #1f2226;
+  --nd-input-border: #55585f;
+
+  --nd-accent: #36c5f0;
+  --nd-accent-hover: #65d1f2;
+  --nd-accent-soft: #17384e;
+  --nd-accent-text: #d9f4ff;
+  --nd-accent-border: #2f6f95;
+
+  --nd-success: #74d99a;
+  --nd-success-bg: #173a27;
+  --nd-warning: #f2c46d;
+  --nd-warning-bg: #453516;
+  --nd-danger: #ff9189;
+  --nd-danger-bg: #452320;
+
+  --nd-sidebar: #111318;
+  --nd-sidebar-hover: #202329;
+  --nd-sidebar-active: #17384e;
+  --nd-sidebar-text: #f4f4f5;
+  --nd-sidebar-muted: #aaa8ad;
+  --nd-sidebar-border: rgba(255,255,255,.08);
+
+  --nd-shadow-1: 0 1px 2px rgba(0,0,0,.32), 0 2px 6px rgba(0,0,0,.16);
+  --nd-shadow-2: 0 16px 36px rgba(0,0,0,.3);
+
+  --background: var(--nd-page);
+  --foreground: var(--nd-text);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* { box-sizing: border-box; }
+
+html {
+  min-width: 100%;
+  min-height: 100%;
+  background: var(--nd-page);
+  color: var(--nd-text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-width: 100%;
+  min-height: 100vh;
+  background: var(--nd-page);
+  color: var(--nd-text);
+  font-family: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+strong,
+b,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 700;
+}
+
+.font-extrabold,
+.font-black {
+  font-weight: 700 !important;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--nd-accent) 24%, transparent);
+}
+
+a { color: inherit; }
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select,
+textarea {
+  color: var(--nd-text);
+  background: var(--nd-input);
+  border-color: var(--nd-input-border);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--nd-faint);
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--nd-accent) 28%, transparent);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   UNIFIED DARK MODE COMPATIBILITY
+   Existing route files still contain legacy hard-coded light colors.
+   These scoped overrides normalize them to one professional dark UI.
+   ============================================================ */
+
+html[data-theme="dark"] :is(
+  .dashboardPage,
+  .imagesPage,
+  .page,
+  .app,
+  .app-shell,
+  .main,
+  .content
+) {
+  background: var(--nd-page) !important;
+  color: var(--nd-text) !important;
+}
+
+html[data-theme="dark"] :is(
+  .hero,
+  .heroSystem,
+  .flowCard,
+  .capabilityCard,
+  .quickStart,
+  .section,
+  .sectionHeader,
+  .sectionBody,
+  .filterCard,
+  .filterPanel,
+  .productSlot,
+  .contextCard,
+  .winningCard,
+  .model,
+  .runPlan,
+  .resultCard,
+  .creativeCard,
+  .card,
+  .assetCard,
+  .runHeader,
+  .jobCard,
+  article,
+  .empty,
+  .emptyState,
+  .modal,
+  .modal-layout,
+  .modalHeader,
+  .syncPanel,
+  .syncStats > div,
+  .resultBox,
+  .toolbar,
+  .productPill,
+  .tabs,
+  .topbar
+) {
+  background: var(--nd-surface) !important;
+  color: var(--nd-text) !important;
+  border-color: var(--nd-border) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] :is(
+  .heroSystem,
+  .systemNote,
+  .statusBox,
+  .productImageOnlyNotice,
+  .distributionNote,
+  .productRule,
+  .lpHeadline,
+  .resultPlaceholder,
+  .resultMedia,
+  .imageWrap,
+  .noImage,
+  .assetImage,
+  .main-image,
+  .gallery,
+  .runStats > div,
+  .jobCard,
+  .syncStats > div,
+  .productPill > span:last-child,
+  .assetMeta span,
+  .skuBadge
+) {
+  background: var(--nd-surface-soft) !important;
+  color: var(--nd-text-soft) !important;
+  border-color: var(--nd-border-soft) !important;
+}
+
+html[data-theme="dark"] :is(
+  h1,h2,h3,h4,h5,h6,
+  .headline,
+  .subheadline,
+  .productName,
+  .creativeName,
+  .assetTitle,
+  .assetProduct,
+  .product-name,
+  .runTitle,
+  .jobTop strong,
+  .libraryHeading,
+  .cardAction,
+  .flowCard strong,
+  .capabilityCard strong,
+  .selectionSummary strong,
+  .variantMeta strong,
+  .model strong,
+  .resultInfo strong,
+  .contextTop strong,
+  .contextGrid strong,
+  .lpHeadline strong
+) {
+  color: var(--nd-text) !important;
+}
+
+html[data-theme="dark"] :is(
+  p,
+  .slug,
+  .meta,
+  .creativeMeta,
+  .assetMeta,
+  .jobMeta,
+  .settingHelp,
+  .validation,
+  .helper,
+  .modalDescription,
+  .systemNote,
+  .contextTop span,
+  .contextGrid span,
+  .selectionSummary span,
+  .variantMeta span,
+  .model p,
+  .resultInfo span,
+  .pageHeader p,
+  .topHeader p
+) {
+  color: var(--nd-muted) !important;
+}
+
+html[data-theme="dark"] :is(
+  .eyebrow,
+  .sectionEyebrow,
+  .slotKicker,
+  .miniLabel,
+  .infoLabel,
+  .fieldLabel,
+  .modal-eyebrow,
+  .modalEyebrow,
+  .syncPanelEyebrow
+) {
+  color: var(--nd-accent) !important;
+}
+
+/* Inputs / selects / search controls */
+html[data-theme="dark"] :is(
+  input,
+  select,
+  textarea,
+  .input,
+  .textarea,
+  .top-search,
+  .urlInput,
+  .searchBox,
+  .productSearch,
+  .searchControl
+) {
+  background: var(--nd-input) !important;
+  color: var(--nd-text) !important;
+  border-color: var(--nd-input-border) !important;
+}
+
+html[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: var(--nd-faint) !important;
+}
+
+/* Neutral buttons: no more white footer/button bars in dark mode */
+html[data-theme="dark"] :is(
+  .secondaryButton,
+  .clearWorkspaceButton,
+  .libraryHeaderButton,
+  .dangerGhost,
+  .addImagesButton,
+  .addProductButton,
+  .searchButton,
+  .clearSearch,
+  .clearFilterButton,
+  .clearButton,
+  .secondary,
+  .toolbar button,
+  .assetActions a,
+  .cardActions button,
+  .cardActions a,
+  .actions button,
+  .actions a,
+  .resultActionButton,
+  .pagination button,
+  .tabs button,
+  .productPill,
+  .choice,
+  .ratio,
+  .segmented button,
+  header > button
+) {
+  background: var(--nd-surface-raised) !important;
+  color: var(--nd-text-soft) !important;
+  border-color: var(--nd-border-strong) !important;
+}
+
+html[data-theme="dark"] :is(
+  .secondaryButton,
+  .clearWorkspaceButton,
+  .libraryHeaderButton,
+  .addImagesButton,
+  .addProductButton,
+  .searchButton,
+  .clearSearch,
+  .clearFilterButton,
+  .clearButton,
+  .secondary,
+  .toolbar button,
+  .assetActions a,
+  .cardActions button,
+  .cardActions a,
+  .actions button,
+  .actions a,
+  .resultActionButton,
+  .pagination button,
+  .tabs button,
+  .productPill,
+  .choice,
+  .ratio,
+  .segmented button,
+  header > button
+):hover {
+  background: var(--nd-surface-hover) !important;
+  color: var(--nd-text) !important;
+  border-color: var(--nd-border-strong) !important;
+}
+
+/* Primary actions stay crisp and readable */
+html[data-theme="dark"] :is(
+  .primaryButton,
+  .useButton,
+  .useButton,
+  .generateButton,
+  .syncButton,
+  .generateBar button,
+  .primary,
+  .use-large,
+  .quickStart button
+) {
+  background: #1264a3 !important;
+  color: #ffffff !important;
+  border-color: #1264a3 !important;
+}
+
+html[data-theme="dark"] :is(
+  .primaryButton,
+  .useButton,
+  .generateButton,
+  .syncButton,
+  .generateBar button,
+  .primary,
+  .use-large,
+  .quickStart button
+):hover {
+  background: #0b568d !important;
+  border-color: #0b568d !important;
+}
+
+/* Selected states must remain DARK with strong contrast. */
+html[data-theme="dark"] :is(
+  .variantCard.active,
+  .model.active,
+  .choice.active,
+  .ratio.active,
+  .segmented button.active,
+  .toolbar button.active,
+  .productPill.active,
+  .tab.active,
+  .card.active,
+  .resultActionButton.libraryReady
+) {
+  background: var(--nd-surface-selected) !important;
+  color: var(--nd-accent-text) !important;
+  border-color: var(--nd-accent-border) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nd-accent) 16%, transparent) !important;
+}
+
+html[data-theme="dark"] :is(
+  .variantCard.active,
+  .model.active,
+  .choice.active,
+  .ratio.active,
+  .segmented button.active,
+  .toolbar button.active,
+  .productPill.active,
+  .tab.active,
+  .card.active
+) :is(strong, span, p, small, div) {
+  color: inherit !important;
+}
+
+html[data-theme="dark"] :is(.variantCheck, .modelCheck) {
+  border-color: var(--nd-border-strong) !important;
+  background: transparent !important;
+  color: transparent !important;
+}
+
+html[data-theme="dark"] :is(.variantCard.active .variantCheck, .model.active .modelCheck) {
+  background: var(--nd-accent) !important;
+  border-color: var(--nd-accent) !important;
+  color: #10222c !important;
+}
+
+/* Footers / bottom strips: never flash white in dark mode */
+html[data-theme="dark"] :is(
+  .cardFooter,
+  .assetActions,
+  .cardActions,
+  .actions,
+  .resultActionsStack,
+  .resultActionsTop,
+  .cardBody,
+  .assetBody,
+  .winningSettings,
+  .resultInfo
+) {
+  background: var(--nd-surface) !important;
+  color: var(--nd-text) !important;
+  border-color: var(--nd-border-soft) !important;
+}
+
+/* Dividers */
+html[data-theme="dark"] :is(
+  hr,
+  .divider,
+  .sectionHeader,
+  .contextTop,
+  .cardTop,
+  .cardContent,
+  .assetBody,
+  .resultInfo
+) {
+  border-color: var(--nd-border-soft) !important;
+}
+
+/* Status / semantic chips */
+html[data-theme="dark"] :is(.status.completed, .jobStatus.completed, .statusBadge.active) {
+  background: var(--nd-success-bg) !important;
+  color: var(--nd-success) !important;
+}
+
+html[data-theme="dark"] :is(.status.failed, .jobStatus.failed, .errorBox, .modalError) {
+  background: var(--nd-danger-bg) !important;
+  color: var(--nd-danger) !important;
+  border-color: color-mix(in srgb, var(--nd-danger) 35%, var(--nd-border)) !important;
+}
+
+html[data-theme="dark"] :is(.warning, .offer) {
+  background: var(--nd-warning-bg) !important;
+  color: var(--nd-warning) !important;
+  border-color: color-mix(in srgb, var(--nd-warning) 35%, var(--nd-border)) !important;
+}
+
+/* Dashboard-specific surfaces */
+html[data-theme="dark"] .dashboardPage .hero {
+  background: linear-gradient(180deg, #24272c 0%, #222529 100%) !important;
+  border-color: var(--nd-border) !important;
+  box-shadow: var(--nd-shadow-1) !important;
+}
+
+html[data-theme="dark"] .dashboardPage .heroSystem {
+  background: #1d2730 !important;
+  border-color: #31556d !important;
+}
+
+html[data-theme="dark"] .dashboardPage .quickStart {
+  background: #151b23 !important;
+  border-color: #29323d !important;
+}
+
+/* Products route previously looked like a separate application. */
+html[data-theme="dark"] .app-shell .content,
+html[data-theme="dark"] .app-shell .main {
+  background: var(--nd-page) !important;
+}
+
+html[data-theme="dark"] .app-shell .card {
+  background: var(--nd-surface) !important;
+  border-color: var(--nd-border) !important;
+}
+
+html[data-theme="dark"] .app-shell .card-body {
+  background: var(--nd-surface) !important;
+  color: var(--nd-text) !important;
+}
+
+html[data-theme="dark"] .app-shell .image-button,
+html[data-theme="dark"] .app-shell .main-image,
+html[data-theme="dark"] .app-shell .thumbs button {
+  background: var(--nd-surface-soft) !important;
+  border-color: var(--nd-border-soft) !important;
+}
+
+/* Modals */
+html[data-theme="dark"] :is(.modal-overlay, .modalBackdrop) {
+  background: rgba(5, 7, 10, .72) !important;
+  backdrop-filter: blur(4px);
+}
+
+/* Scrollbars: quiet, app-like */
+html[data-theme="dark"] * {
+  scrollbar-color: #4a4d53 transparent;
+}
+
+html[data-theme="dark"] *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html[data-theme="dark"] *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html[data-theme="dark"] *::-webkit-scrollbar-thumb {
+  background: #4a4d53;
+  border: 2px solid var(--nd-page);
+  border-radius: 999px;
 }
