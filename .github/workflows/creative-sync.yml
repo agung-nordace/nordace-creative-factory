@@ -10,9 +10,24 @@ jobs:
   sync:
     runs-on: ubuntu-latest
 
+    timeout-minutes: 5
+
     steps:
-      - name: Trigger creative sync
-        run: |
-          curl --fail --show-error --silent \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            https://nordace-creative-factory.vercel.app/api/cron/creative-sync
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync newest Nordace creatives
+        env:
+          ND_API_BASE_URL: ${{ secrets.ND_API_BASE_URL }}
+          ND_API_TOKEN: ${{ secrets.ND_API_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: node scripts/creative-sync.mjs
