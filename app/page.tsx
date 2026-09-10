@@ -1,936 +1,586 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import NdWorkspaceShell from "@/components/nd-workspace-shell";
 
-type Team = {
-  id: number;
-  name: string;
-  description?: string | null;
-};
+const FLOW = [
+  {
+    step: "01",
+    title: "Choose your product",
+    description:
+      "Start from the product library, confirm the SKU/color, and keep clear product references ready for Product Lock.",
+    href: "/products",
+    action: "Open Products",
+    icon: "□",
+  },
+  {
+    step: "02",
+    title: "Choose the landing-page context",
+    description:
+      "Use an existing landing page so the creative engine understands the real angle, audience, offer, headline, and marketing message.",
+    href: "/landing-pages",
+    action: "Open Landing Pages",
+    icon: "▤",
+  },
+  {
+    step: "03",
+    title: "Generate creative variations",
+    description:
+      "Select product colors, optional winning-ad inspiration, creative models, output count, aspect ratio, and your creative direction.",
+    href: "/generate?restore=1",
+    action: "Start Generating",
+    icon: "✦",
+  },
+  {
+    step: "04",
+    title: "Review, edit & repurpose",
+    description:
+      "Every finished output is saved in the generated library. Edit an approved ad, download it, or repurpose it into other placements.",
+    href: "/generated-library",
+    action: "Open Generated Library",
+    icon: "▣",
+  },
+];
 
-type Sprint = {
-  id: number;
-  team_id: number | null;
-  name: string;
-  description?: string | null;
-};
+const CAPABILITIES = [
+  {
+    title: "Product Lock",
+    text: "Use exact product/color references so shape, material, handles, hardware and visual identity remain authoritative.",
+  },
+  {
+    title: "LP Intelligence",
+    text: "Creative direction can be grounded in the actual landing-page message instead of repeating only one headline.",
+  },
+  {
+    title: "Creative Models",
+    text: "Generate UGC, testimonial, billboard, comparison, social proof, lifestyle, feature and native-style concepts from one workflow.",
+  },
+  {
+    title: "Post-Generation Workflow",
+    text: "Save outputs, edit approved creatives, repurpose ratios and keep the work organized by product.",
+  },
+];
 
-type Creative = {
-  id: number;
-  name: string;
-  description?: string | null;
-  type?: string | null;
-  file_url?: string | null;
-  thumbnail_url?: string | null;
-  optimized_url?: string | null;
-  width?: number | null;
-  height?: number | null;
-  file_size?: number | null;
-  mime_type?: string | null;
-  team_id?: number | null;
-  sprint_id?: number | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  sprints?: {
-    id: number;
-    name: string;
-    team_id: number | null;
-  } | null;
-};
-
-type Pagination = {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
-};
-
-export default function Home() {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-  const [creatives, setCreatives] = useState<Creative[]>([]);
-
-  const [selectedTeam, setSelectedTeam] = useState("all");
-  const [selectedSprint, setSelectedSprint] = useState("all");
-
-  const [search, setSearch] = useState("");
-
-  const [page, setPage] = useState(1);
-  const [limit] = useState(24);
-
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 24,
-    total: 0,
-    pages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  });
-
-  const [loadingTeams, setLoadingTeams] = useState(true);
-  const [loadingSprints, setLoadingSprints] = useState(false);
-  const [loadingCreatives, setLoadingCreatives] = useState(false);
-
-  // ============================================================
-  // LOAD TEAMS
-  // ============================================================
-
-  useEffect(() => {
-    const loadTeams = async () => {
-      try {
-        setLoadingTeams(true);
-
-        const response = await fetch("/api/library/teams", {
-          cache: "no-store",
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.error || "Failed to load teams");
-        }
-
-        setTeams(result.data ?? []);
-      } catch (error) {
-        console.error("Load teams error:", error);
-        setTeams([]);
-      } finally {
-        setLoadingTeams(false);
-      }
-    };
-
-    loadTeams();
-  }, []);
-
-  // ============================================================
-  // LOAD SPRINTS WHEN TEAM CHANGES
-  // ============================================================
-
-  useEffect(() => {
-    const loadSprints = async () => {
-      try {
-        setLoadingSprints(true);
-
-        const query =
-          selectedTeam === "all"
-            ? "/api/library/sprints"
-            : `/api/library/sprints?team_id=${encodeURIComponent(
-                selectedTeam
-              )}`;
-
-        const response = await fetch(query, {
-          cache: "no-store",
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.error || "Failed to load sprints");
-        }
-
-        setSprints(result.data ?? []);
-      } catch (error) {
-        console.error("Load sprints error:", error);
-        setSprints([]);
-      } finally {
-        setLoadingSprints(false);
-      }
-    };
-
-    setSelectedSprint("all");
-    setPage(1);
-
-    loadSprints();
-  }, [selectedTeam]);
-
-  // ============================================================
-  // LOAD CREATIVES
-  // ============================================================
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const timer = setTimeout(async () => {
-      try {
-        setLoadingCreatives(true);
-
-        const params = new URLSearchParams();
-
-        params.set("page", String(page));
-        params.set("limit", String(limit));
-
-        if (selectedTeam !== "all") {
-          params.set("team_id", selectedTeam);
-        }
-
-        if (selectedSprint !== "all") {
-          params.set("sprint_id", selectedSprint);
-        }
-
-        if (search.trim()) {
-          params.set("search", search.trim());
-        }
-
-        const response = await fetch(
-          `/api/library/creatives?${params.toString()}`,
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(
-            result.error || "Failed to load creatives"
-          );
-        }
-
-        setCreatives(result.data ?? []);
-
-        setPagination(
-          result.pagination ?? {
-            page: 1,
-            limit,
-            total: 0,
-            pages: 1,
-            hasNextPage: false,
-            hasPreviousPage: false,
-          }
-        );
-      } catch (error: any) {
-        if (error?.name === "AbortError") {
-          return;
-        }
-
-        console.error("Load creatives error:", error);
-        setCreatives([]);
-      } finally {
-        setLoadingCreatives(false);
-      }
-    }, 250);
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [
-    selectedTeam,
-    selectedSprint,
-    search,
-    page,
-    limit,
-  ]);
-
-  // ============================================================
-  // RESET PAGE WHEN FILTER CHANGES
-  // ============================================================
-
-  useEffect(() => {
-    setPage(1);
-  }, [selectedSprint, search]);
-
-  const selectedTeamName = useMemo(() => {
-    if (selectedTeam === "all") {
-      return "All Teams";
-    }
-
-    return (
-      teams.find(
-        (team) => String(team.id) === selectedTeam
-      )?.name ?? "Unknown Team"
-    );
-  }, [teams, selectedTeam]);
-
-  const selectedSprintName = useMemo(() => {
-    if (selectedSprint === "all") {
-      return "All Sprints";
-    }
-
-    return (
-      sprints.find(
-        (sprint) => String(sprint.id) === selectedSprint
-      )?.name ?? "Unknown Sprint"
-    );
-  }, [sprints, selectedSprint]);
-
-  // ============================================================
-  // UI
-  // ============================================================
+export default function DashboardPage() {
+  const router = useRouter();
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-title">
-            ND Creative Factory
+    <NdWorkspaceShell>
+      <main className="dashboardPage">
+        <header className="hero">
+          <div className="heroCopy">
+            <div className="eyebrow">ND CREATIVE FACTORY</div>
+
+            <h1>
+              From product references to finished ad creatives.
+            </h1>
+
+            <p>
+              One workspace for preparing product truth, selecting the
+              marketing context, generating multiple creative concepts,
+              and managing the final outputs.
+            </p>
+
+            <div className="heroActions">
+              <button
+                className="primaryButton"
+                onClick={() => router.push("/generate?restore=1")}
+              >
+                ✦ Start Generating
+              </button>
+
+              <button
+                className="secondaryButton"
+                onClick={() => router.push("/generated-library")}
+              >
+                ▣ View Generated Library
+              </button>
+            </div>
           </div>
 
-          <div className="brand-subtitle">
-            Powered by Nordace Creative Data
-          </div>
-        </div>
-
-        <nav className="nav">
-          <button className="nav-item active">
-            Dashboard
-          </button>
-
-          <button className="nav-item">
-            Images
-          </button>
-
-          <button className="nav-item">
-            Products
-          </button>
-
-          <button className="nav-item">
-            Workflows
-          </button>
-
-          <button className="nav-item">
-            Generate
-          </button>
-
-          <button className="nav-item">
-            Jobs
-          </button>
-
-          <button className="nav-item">
-            Settings
-          </button>
-        </nav>
-      </aside>
-
-      <main className="main">
-        <header className="topbar">
-          <input
-            className="top-search"
-            type="text"
-            placeholder="Search creatives..."
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-          />
-
-          <div className="profile">
-            <div className="profile-text">
-              <strong>Creative Factory</strong>
-              <span>Nordace</span>
+          <div className="heroSystem">
+            <div className="systemTop">
+              <span className="statusDot" />
+              <strong>Creative Factory Workflow</strong>
             </div>
 
-            <div className="avatar">CF</div>
+            <div className="miniFlow">
+              <div>
+                <span>1</span>
+                <p>Product</p>
+              </div>
+              <i>→</i>
+              <div>
+                <span>2</span>
+                <p>LP Context</p>
+              </div>
+              <i>→</i>
+              <div>
+                <span>3</span>
+                <p>Generate</p>
+              </div>
+              <i>→</i>
+              <div>
+                <span>4</span>
+                <p>Library</p>
+              </div>
+            </div>
+
+            <div className="systemNote">
+              <strong>Recommended first run</strong>
+              <span>
+                1 product color · 4 Creative Models · 4 variations · 1:1
+              </span>
+            </div>
           </div>
         </header>
 
-        <section className="content">
-          <div className="page-heading">
-            <h1>Creative Library</h1>
+        <section className="introSection">
+          <div>
+            <div className="sectionEyebrow">HOW TO USE IT</div>
+            <h2>Creative Factory flow</h2>
+          </div>
 
+          <p>
+            Follow these four stages. Every card is clickable and takes you
+            directly to the correct workspace.
+          </p>
+        </section>
+
+        <section className="flowGrid">
+          {FLOW.map((item) => (
+            <button
+              key={item.step}
+              className="flowCard"
+              onClick={() => router.push(item.href)}
+            >
+              <div className="flowCardTop">
+                <span className="flowIcon">{item.icon}</span>
+                <span className="stepNumber">{item.step}</span>
+              </div>
+
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+
+              <div className="cardAction">
+                {item.action}
+                <span>→</span>
+              </div>
+            </button>
+          ))}
+        </section>
+
+        <section className="capabilitySection">
+          <div className="sectionHeader">
+            <div>
+              <div className="sectionEyebrow">WHAT THE SYSTEM DOES</div>
+              <h2>Built for the complete creative workflow</h2>
+            </div>
+          </div>
+
+          <div className="capabilityGrid">
+            {CAPABILITIES.map((item) => (
+              <article key={item.title} className="capabilityCard">
+                <div className="check">✓</div>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.text}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="quickStart">
+          <div>
+            <div className="sectionEyebrow">QUICK START</div>
+            <h2>Ready to make a new batch?</h2>
             <p>
-              Live creative index powered by
-              images.nordace.com
+              Open Generate when your product references are ready. Your
+              current Generate workspace is preserved while you move between
+              the Library and other post-generation tools.
             </p>
           </div>
 
-          <div className="filter-card">
-            <div className="filter-field">
-              <label>Team</label>
-
-              <select
-                value={selectedTeam}
-                disabled={loadingTeams}
-                onChange={(event) =>
-                  setSelectedTeam(event.target.value)
-                }
-              >
-                <option value="all">
-                  {loadingTeams
-                    ? "Loading teams..."
-                    : "All Teams"}
-                </option>
-
-                {teams.map((team) => (
-                  <option
-                    key={team.id}
-                    value={String(team.id)}
-                  >
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-field">
-              <label>Sprint</label>
-
-              <select
-                value={selectedSprint}
-                disabled={loadingSprints}
-                onChange={(event) =>
-                  setSelectedSprint(
-                    event.target.value
-                  )
-                }
-              >
-                <option value="all">
-                  {loadingSprints
-                    ? "Loading sprints..."
-                    : "All Sprints"}
-                </option>
-
-                {sprints.map((sprint) => (
-                  <option
-                    key={sprint.id}
-                    value={String(sprint.id)}
-                  >
-                    {sprint.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-field results-field">
-              <label>Results</label>
-
-              <div className="results-pill">
-                {loadingCreatives
-                  ? "Loading..."
-                  : `${pagination.total} creatives`}
-              </div>
-            </div>
-          </div>
-
-          <div className="context-row">
-            <div>
-              <strong>{selectedTeamName}</strong>
-              <span> / </span>
-              <strong>{selectedSprintName}</strong>
-            </div>
-
-            <div>
-              Page {pagination.page} of{" "}
-              {pagination.pages}
-            </div>
-          </div>
-
-          {loadingCreatives && creatives.length === 0 ? (
-            <div className="empty-state">
-              Loading creatives...
-            </div>
-          ) : creatives.length === 0 ? (
-            <div className="empty-state">
-              No creatives found.
-            </div>
-          ) : (
-            <div className="creative-grid">
-              {creatives.map((creative) => {
-                const preview =
-                  creative.thumbnail_url ||
-                  creative.optimized_url ||
-                  creative.file_url ||
-                  "";
-
-                const isVideo =
-                  creative.mime_type?.startsWith(
-                    "video/"
-                  ) ||
-                  creative.type === "mp4";
-
-                return (
-                  <article
-                    key={creative.id}
-                    className="creative-card"
-                  >
-                    <div className="creative-preview">
-                      {isVideo ? (
-                        <video
-                          src={creative.file_url || ""}
-                          poster={
-                            creative.thumbnail_url ||
-                            undefined
-                          }
-                          controls
-                          preload="metadata"
-                        />
-                      ) : (
-                        <img
-                          src={preview}
-                          alt={creative.name}
-                          loading="lazy"
-                        />
-                      )}
-                    </div>
-
-                    <div className="creative-body">
-                      <div className="creative-name">
-                        {creative.name}
-                      </div>
-
-                      <div className="creative-meta">
-                        <span>
-                          {creative.sprints?.name ||
-                            "Unassigned"}
-                        </span>
-
-                        <span>
-                          {creative.width &&
-                          creative.height
-                            ? `${creative.width}×${creative.height}`
-                            : creative.mime_type ||
-                              creative.type ||
-                              "Creative"}
-                        </span>
-                      </div>
-
-                      <div className="creative-actions">
-                        <a
-                          href={
-                            creative.file_url || "#"
-                          }
-                          target="_blank"
-                          rel="noreferrer"
-                          className="secondary-button"
-                        >
-                          Open
-                        </a>
-
-                        <button
-                          className="primary-button"
-                          onClick={() => {
-                            localStorage.setItem(
-                              "selectedCreative",
-                              JSON.stringify(creative)
-                            );
-
-                            alert(
-                              `Selected: ${creative.name}`
-                            );
-                          }}
-                        >
-                          Use Creative
-                        </button>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-
-          {pagination.pages > 1 && (
-            <div className="pagination">
-              <button
-                disabled={
-                  !pagination.hasPreviousPage ||
-                  loadingCreatives
-                }
-                onClick={() =>
-                  setPage((current) =>
-                    Math.max(current - 1, 1)
-                  )
-                }
-              >
-                ← Previous
-              </button>
-
-              <div>
-                Page <strong>{pagination.page}</strong>{" "}
-                of{" "}
-                <strong>{pagination.pages}</strong>
-              </div>
-
-              <button
-                disabled={
-                  !pagination.hasNextPage ||
-                  loadingCreatives
-                }
-                onClick={() =>
-                  setPage((current) => current + 1)
-                }
-              >
-                Next →
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => router.push("/generate?restore=1")}
+          >
+            ✦ Open Creative Generator
+          </button>
         </section>
+
+        <style jsx>{`
+          .dashboardPage {
+            min-height: 100vh;
+            padding: 34px 38px 52px;
+            background: #f8fafc;
+            color: #0f172a;
+          }
+
+          .hero {
+            max-width: 1460px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.25fr) minmax(360px, .75fr);
+            gap: 22px;
+            padding: 34px;
+            border: 1px solid #dbe3ee;
+            border-radius: 16px;
+            background: #fff;
+          }
+
+          .eyebrow,
+          .sectionEyebrow {
+            color: #2563eb;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: .11em;
+          }
+
+          .hero h1 {
+            max-width: 780px;
+            margin: 10px 0 12px;
+            font-size: clamp(34px, 4vw, 56px);
+            line-height: 1.02;
+            letter-spacing: -.04em;
+          }
+
+          .heroCopy > p {
+            max-width: 760px;
+            margin: 0;
+            color: #64748b;
+            font-size: 15px;
+            line-height: 1.65;
+          }
+
+          .heroActions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 24px;
+          }
+
+          .primaryButton,
+          .secondaryButton,
+          .quickStart button {
+            min-height: 44px;
+            border-radius: 8px;
+            padding: 0 15px;
+            font-size: 12px;
+            font-weight: 850;
+            cursor: pointer;
+          }
+
+          .primaryButton,
+          .quickStart button {
+            border: 1px solid #2563eb;
+            background: #2563eb;
+            color: #fff;
+          }
+
+          .secondaryButton {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+          }
+
+          .heroSystem {
+            align-self: stretch;
+            padding: 20px;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            background: #eff6ff;
+          }
+
+          .systemTop {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+          }
+
+          .statusDot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #16a34a;
+            box-shadow: 0 0 0 4px rgba(22, 163, 74, .12);
+          }
+
+          .miniFlow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 7px;
+            margin: 24px 0;
+          }
+
+          .miniFlow div {
+            flex: 1 1 0;
+            min-width: 0;
+            text-align: center;
+          }
+
+          .miniFlow span {
+            width: 30px;
+            height: 30px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 6px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            font-size: 11px;
+            font-weight: 900;
+          }
+
+          .miniFlow p {
+            margin: 0;
+            color: #334155;
+            font-size: 10px;
+            font-weight: 800;
+          }
+
+          .miniFlow i {
+            color: #93c5fd;
+            font-style: normal;
+          }
+
+          .systemNote {
+            display: grid;
+            gap: 4px;
+            padding: 12px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            background: rgba(255,255,255,.72);
+          }
+
+          .systemNote strong {
+            font-size: 11px;
+          }
+
+          .systemNote span {
+            color: #64748b;
+            font-size: 10px;
+            line-height: 1.45;
+          }
+
+          .introSection,
+          .sectionHeader {
+            max-width: 1460px;
+            margin: 28px auto 12px;
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 20px;
+          }
+
+          .introSection h2,
+          .sectionHeader h2,
+          .quickStart h2 {
+            margin: 5px 0 0;
+            font-size: 23px;
+            letter-spacing: -.02em;
+          }
+
+          .introSection > p {
+            max-width: 520px;
+            margin: 0;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: right;
+          }
+
+          .flowGrid {
+            max-width: 1460px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+          }
+
+          .flowCard {
+            min-height: 290px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #dbe3ee;
+            border-radius: 12px;
+            padding: 18px;
+            background: #fff;
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+            transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+          }
+
+          .flowCard:hover {
+            transform: translateY(-2px);
+            border-color: #93c5fd;
+            box-shadow: 0 12px 30px rgba(15,23,42,.07);
+          }
+
+          .flowCardTop {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+
+          .flowIcon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 9px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-weight: 900;
+          }
+
+          .stepNumber {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 900;
+            letter-spacing: .08em;
+          }
+
+          .flowCard h3 {
+            margin: 26px 0 8px;
+            font-size: 17px;
+          }
+
+          .flowCard p {
+            margin: 0;
+            color: #64748b;
+            font-size: 12px;
+            line-height: 1.6;
+          }
+
+          .cardAction {
+            margin-top: auto;
+            padding-top: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 900;
+          }
+
+          .capabilitySection {
+            max-width: 1460px;
+            margin: 30px auto 0;
+          }
+
+          .sectionHeader {
+            margin: 0 0 12px;
+          }
+
+          .capabilityGrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+          }
+
+          .capabilityCard {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            padding: 17px;
+            border: 1px solid #dbe3ee;
+            border-radius: 10px;
+            background: #fff;
+          }
+
+          .check {
+            width: 26px;
+            height: 26px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: #dcfce7;
+            color: #15803d;
+            font-size: 11px;
+            font-weight: 900;
+          }
+
+          .capabilityCard h3 {
+            margin: 2px 0 5px;
+            font-size: 13px;
+          }
+
+          .capabilityCard p {
+            margin: 0;
+            color: #64748b;
+            font-size: 11px;
+            line-height: 1.55;
+          }
+
+          .quickStart {
+            max-width: 1460px;
+            margin: 28px auto 0;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 22px;
+            border-radius: 13px;
+            background: #101827;
+            color: white;
+          }
+
+          .quickStart p {
+            max-width: 760px;
+            margin: 7px 0 0;
+            color: #cbd5e1;
+            font-size: 12px;
+            line-height: 1.55;
+          }
+
+          .quickStart button {
+            flex: 0 0 auto;
+          }
+
+          @media (max-width: 1120px) {
+            .hero {
+              grid-template-columns: 1fr;
+            }
+
+            .flowGrid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+          }
+
+          @media (max-width: 760px) {
+            .dashboardPage {
+              padding: 18px;
+            }
+
+            .hero {
+              padding: 22px;
+            }
+
+            .introSection,
+            .quickStart {
+              align-items: flex-start;
+              flex-direction: column;
+            }
+
+            .introSection > p {
+              text-align: left;
+            }
+
+            .flowGrid,
+            .capabilityGrid {
+              grid-template-columns: 1fr;
+            }
+
+            .quickStart button {
+              width: 100%;
+            }
+          }
+        `}</style>
       </main>
-
-      <style jsx global>{`
-        * {
-          box-sizing: border-box;
-        }
-
-        html,
-        body {
-          margin: 0;
-          padding: 0;
-          background: #f7f8fa;
-          color: #111827;
-          font-family:
-            Arial,
-            Helvetica,
-            sans-serif;
-        }
-
-        button,
-        input,
-        select {
-          font: inherit;
-        }
-
-        .app-shell {
-          min-height: 100vh;
-          display: flex;
-        }
-
-        .sidebar {
-          width: 240px;
-          min-height: 100vh;
-          position: fixed;
-          left: 0;
-          top: 0;
-          border-right: 1px solid #d9dde5;
-          background: white;
-          padding: 30px 20px;
-          z-index: 20;
-        }
-
-        .brand {
-          margin-bottom: 30px;
-        }
-
-        .brand-title {
-          font-size: 21px;
-          font-weight: 700;
-        }
-
-        .brand-subtitle {
-          margin-top: 6px;
-          font-size: 12px;
-          color: #64748b;
-        }
-
-        .nav {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .nav-item {
-          border: 0;
-          background: transparent;
-          text-align: left;
-          padding: 12px 14px;
-          border-radius: 8px;
-          cursor: pointer;
-          color: #334155;
-        }
-
-        .nav-item:hover {
-          background: #f3f6fb;
-        }
-
-        .nav-item.active {
-          background: #eaf2ff;
-          color: #165dff;
-        }
-
-        .main {
-          margin-left: 240px;
-          width: calc(100% - 240px);
-          min-height: 100vh;
-        }
-
-        .topbar {
-          height: 90px;
-          background: white;
-          border-bottom: 1px solid #d9dde5;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 32px;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-
-        .top-search {
-          width: min(520px, 50vw);
-          height: 42px;
-          border: 1px solid #9aa4b2;
-          border-radius: 7px;
-          padding: 0 15px;
-          outline: none;
-        }
-
-        .top-search:focus {
-          border-color: #165dff;
-        }
-
-        .profile {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .profile-text {
-          display: flex;
-          flex-direction: column;
-          text-align: right;
-          font-size: 12px;
-        }
-
-        .profile-text span {
-          color: #64748b;
-          margin-top: 2px;
-        }
-
-        .avatar {
-          width: 38px;
-          height: 38px;
-          border-radius: 50%;
-          background: #165dff;
-          color: white;
-          display: grid;
-          place-items: center;
-          font-weight: 700;
-        }
-
-        .content {
-          padding: 34px 32px 60px;
-          max-width: 1500px;
-          margin: 0 auto;
-        }
-
-        .page-heading h1 {
-          margin: 0;
-          font-size: 34px;
-        }
-
-        .page-heading p {
-          margin: 8px 0 0;
-          color: #64748b;
-        }
-
-        .filter-card {
-          margin-top: 28px;
-          padding: 18px;
-          background: white;
-          border: 1px solid #b8c0cc;
-          border-radius: 12px;
-          display: grid;
-          grid-template-columns:
-            minmax(200px, 1fr)
-            minmax(200px, 1fr)
-            auto;
-          gap: 16px;
-          align-items: end;
-        }
-
-        .filter-field {
-          display: flex;
-          flex-direction: column;
-          gap: 7px;
-        }
-
-        .filter-field label {
-          font-size: 12px;
-          color: #475569;
-        }
-
-        .filter-field select {
-          height: 42px;
-          border: 1px solid #64748b;
-          border-radius: 7px;
-          padding: 0 12px;
-          background: white;
-        }
-
-        .results-pill {
-          min-width: 125px;
-          height: 42px;
-          border: 1px solid #64748b;
-          border-radius: 7px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: white;
-        }
-
-        .context-row {
-          margin: 22px 0 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 13px;
-          color: #64748b;
-        }
-
-        .creative-grid {
-          display: grid;
-          grid-template-columns:
-            repeat(
-              auto-fill,
-              minmax(260px, 1fr)
-            );
-          gap: 22px;
-        }
-
-        .creative-card {
-          background: white;
-          border: 1px solid #94a3b8;
-          border-radius: 12px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          min-width: 0;
-        }
-
-        .creative-preview {
-          width: 100%;
-          aspect-ratio: 1 / 1;
-          background: #edf0f4;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .creative-preview img,
-        .creative-preview video {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        .creative-body {
-          padding: 15px;
-        }
-
-        .creative-name {
-          font-size: 14px;
-          font-weight: 700;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          margin-bottom: 9px;
-        }
-
-        .creative-meta {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
-          font-size: 12px;
-          color: #64748b;
-          min-height: 18px;
-        }
-
-        .creative-meta span {
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
-
-        .creative-actions {
-          margin-top: 14px;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-        }
-
-        .creative-actions a,
-        .creative-actions button {
-          height: 38px;
-          border-radius: 6px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          text-decoration: none;
-          font-size: 13px;
-        }
-
-        .secondary-button {
-          border: 1px solid #64748b;
-          background: white;
-          color: #111827;
-        }
-
-        .primary-button {
-          border: 1px solid #165dff;
-          background: #165dff;
-          color: white;
-        }
-
-        .empty-state {
-          min-height: 320px;
-          display: grid;
-          place-items: center;
-          border: 1px dashed #cbd5e1;
-          border-radius: 12px;
-          background: white;
-          color: #64748b;
-        }
-
-        .pagination {
-          margin-top: 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 20px;
-        }
-
-        .pagination button {
-          min-width: 120px;
-          height: 40px;
-          background: white;
-          border: 1px solid #94a3b8;
-          border-radius: 7px;
-          cursor: pointer;
-        }
-
-        .pagination button:disabled {
-          opacity: 0.45;
-          cursor: not-allowed;
-        }
-
-        @media (max-width: 900px) {
-          .sidebar {
-            display: none;
-          }
-
-          .main {
-            margin-left: 0;
-            width: 100%;
-          }
-
-          .topbar {
-            padding: 0 18px;
-          }
-
-          .content {
-            padding: 24px 18px 50px;
-          }
-
-          .filter-card {
-            grid-template-columns: 1fr;
-          }
-
-          .creative-grid {
-            grid-template-columns:
-              repeat(
-                auto-fill,
-                minmax(220px, 1fr)
-              );
-          }
-        }
-      `}</style>
-    </div>
+    </NdWorkspaceShell>
   );
 }
