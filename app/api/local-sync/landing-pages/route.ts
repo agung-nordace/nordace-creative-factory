@@ -6,7 +6,7 @@ import path from "node:path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 3600;
+export const maxDuration = 300;
 
 type ParsedLp = {
   sourceId: number;
