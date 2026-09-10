@@ -11,7 +11,18 @@ export async function GET() {
       .order("name", { ascending: true });
 
     if (error) {
-      throw error;
+      console.error("Supabase teams error:", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -19,13 +30,15 @@ export async function GET() {
       data: data ?? [],
     });
   } catch (error) {
+    console.error("Teams API fatal error:", error);
+
     return NextResponse.json(
       {
         success: false,
         error:
           error instanceof Error
             ? error.message
-            : String(error),
+            : JSON.stringify(error),
       },
       { status: 500 }
     );
