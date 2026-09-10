@@ -393,33 +393,92 @@ export async function POST(
       landingPageUrl.toString()
     );
 
-    const response =
-      await fetch(
-        landingPageUrl.toString(),
-        {
+    async function fetchLandingPage() {
+      const targetUrl = landingPageUrl.toString();
+
+      const browserHeaders: Record<string, string> = {
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language":
+          "en-US,en;q=0.9",
+        "Cache-Control":
+          "no-cache",
+        Pragma:
+          "no-cache",
+        Referer:
+          "https://lp.nordace.com/",
+        "Sec-Fetch-Dest":
+          "document",
+        "Sec-Fetch-Mode":
+          "navigate",
+        "Sec-Fetch-Site":
+          "same-origin",
+        "Sec-Fetch-User":
+          "?1",
+        "Upgrade-Insecure-Requests":
+          "1",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      };
+
+      const attempts = [
+        targetUrl,
+        targetUrl.endsWith("/")
+          ? targetUrl
+          : `${targetUrl}/`,
+      ];
+
+      let lastStatus = 0;
+      let lastBody = "";
+
+      for (const url of attempts) {
+        const response = await fetch(url, {
           method: "GET",
-
-          headers: {
-            Accept:
-              "text/html,application/xhtml+xml",
-
-            "User-Agent":
-              "Mozilla/5.0 NordaceCreativeFactory/1.0",
-          },
-
+          headers: browserHeaders,
           cache: "no-store",
           redirect: "follow",
-        }
-      );
+        });
 
-    if (!response.ok) {
+        lastStatus = response.status;
+
+        if (response.ok) {
+          return {
+            html: await response.text(),
+            finalUrl: response.url || url,
+          };
+        }
+
+        lastBody = (await response.text())
+          .replace(/\s+/g, " ")
+          .slice(0, 500);
+
+        console.warn(
+          "Landing page fetch attempt failed:",
+          {
+            url,
+            status: response.status,
+            statusText: response.statusText,
+            bodyPreview: lastBody,
+          }
+        );
+
+        if (response.status !== 403) {
+          break;
+        }
+      }
+
       throw new Error(
-        `Landing page fetch failed: ${response.status}`
+        `Landing page fetch failed: ${lastStatus}` +
+          (lastBody
+            ? ` — ${lastBody.slice(0, 180)}`
+            : "")
       );
     }
 
-    const html =
-      await response.text();
+    const {
+      html,
+      finalUrl,
+    } = await fetchLandingPage();
 
     // =========================================================
     // PARSE HTML
@@ -713,7 +772,7 @@ export async function POST(
               0,
 
             final_url:
-              response.url,
+              finalUrl,
           },
 
           analyzed_at:
