@@ -318,37 +318,11 @@ export async function POST(
 
   try {
     // =========================================================
-    // LOCAL ONLY
+    // ENVIRONMENT
     // =========================================================
-
-    if (process.env.VERCEL) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Landing page importer is disabled in production.",
-        },
-        { status: 403 }
-      );
-    }
-
-    const host =
-      request.headers.get("host") ?? "";
-
-    const local =
-      host.startsWith("localhost:") ||
-      host.startsWith("127.0.0.1:");
-
-    if (!local) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Landing page importer can only run from localhost.",
-        },
-        { status: 403 }
-      );
-    }
+    // Production import is allowed. Remote URLs remain restricted
+    // to the Nordace LP allowlist validated below.
+    // =========================================================
 
     // =========================================================
     // INPUT
