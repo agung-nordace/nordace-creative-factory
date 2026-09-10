@@ -1,12 +1,10 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const supabase = useMemo(() => createClient(), []);
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,6 +12,9 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
@@ -28,8 +29,15 @@ export default function LoginPage() {
       return;
     }
 
-    const next = searchParams.get("next");
-    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+    const safeNext =
+      next &&
+      next.startsWith("/") &&
+      !next.startsWith("//")
+        ? next
+        : "/";
+
     window.location.assign(safeNext);
   }
 
@@ -40,9 +48,11 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2864e8] text-lg font-bold text-white">
             N
           </div>
+
           <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[#0d1729]">
             ND Creative Factory
           </h1>
+
           <p className="mt-2 text-sm text-[#64748b]">
             Sign in to access the Nordace creative workspace.
           </p>
@@ -55,6 +65,7 @@ export default function LoginPage() {
           <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[#334155]">
             Email
           </label>
+
           <input
             type="email"
             autoComplete="email"
@@ -68,6 +79,7 @@ export default function LoginPage() {
           <label className="mb-2 block text-xs font-bold uppercase tracking-[0.08em] text-[#334155]">
             Password
           </label>
+
           <input
             type="password"
             autoComplete="current-password"

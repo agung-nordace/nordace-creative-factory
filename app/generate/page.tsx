@@ -126,6 +126,7 @@ type GenerationJob = {
   art_plate_url?: string | null;
   rendered_text?: Record<string, any> | null;
   typography_status?: string | null;
+  ratio?: string | null;
   typography_qa?: {
     valid?: boolean;
     errors?: string[];
@@ -268,7 +269,12 @@ export default function GeneratePage() {
   useEffect(() => {
     setGenerationRunId(null);
     setGenerationJobs([]);
-    setGenerationProgress(null);
+    setGenerationProgress({
+      total: 0,
+      completed: 0,
+      failed: 0,
+      processing: 0,
+    });
     setGenerationState("idle");
     setGenerationError("");
     setPreviewGenerated(false);
@@ -723,19 +729,33 @@ export default function GeneratePage() {
 
   const productReferenceGroups = useMemo(() => {
     return productSlots.flatMap((slot) => {
-      if (!slot.product) return [];
+      const product = slot.product;
+      if (!product) return [];
+
       return slot.selectedVariantIds.flatMap((variantId) => {
-        const variant = slot.variants.find((item) => String(item.id) === variantId);
+        const variant = slot.variants.find(
+          (item) => String(item.id) === variantId
+        );
+
         if (!variant) return [];
-        const saved = slot.variantImages.filter((image) => image.variant_id === variant.id);
-        const refs = Array.from(new Set([
-          ...(variant.image_url ? [variant.image_url] : []),
-          ...saved.map((image) => image.image_url),
-        ].filter(Boolean)));
+
+        const saved = slot.variantImages.filter(
+          (image) => image.variant_id === variant.id
+        );
+
+        const refs = Array.from(
+          new Set(
+            [
+              ...(variant.image_url ? [variant.image_url] : []),
+              ...saved.map((image) => image.image_url),
+            ].filter(Boolean) as string[]
+          )
+        );
+
         return [{
-          productId: slot.product.id,
-          productName: slot.product.name,
-          parentSku: slot.product.sku ?? null,
+          productId: product.id,
+          productName: product.name,
+          parentSku: product.sku ?? null,
           variantId: variant.id,
           variantSku: variant.variant_sku,
           color: variant.color ?? null,
@@ -1078,6 +1098,8 @@ export default function GeneratePage() {
       return;
     }
 
+    const activeRunId = generationRunId;
+
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -1086,7 +1108,7 @@ export default function GeneratePage() {
 
       try {
         const finished = await refreshGeneration(
-          generationRunId
+          activeRunId
         );
 
         if (!cancelled && !finished) {

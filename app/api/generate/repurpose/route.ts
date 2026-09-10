@@ -256,13 +256,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const assetId = Number(body?.asset_id);
-    const requestedRatios = Array.isArray(body?.ratios)
+    const requestedRatios: string[] = Array.isArray(body?.ratios)
       ? body.ratios.map((value: unknown) => String(value))
       : [];
 
-    const ratios = Array.from(
-      new Set(
-        requestedRatios.filter((ratio: string) =>
+    const ratios: string[] = Array.from(
+      new Set<string>(
+        requestedRatios.filter((ratio) =>
           Object.prototype.hasOwnProperty.call(SIZE_BY_RATIO, ratio)
         )
       )
